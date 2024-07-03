@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
+import { EventEmitter } from "events";
 
 import { faker } from "@faker-js/faker";
 
 const HTTP_PORT = 4000;
 const app = express();
+const eventEmitter = new EventEmitter();
 app.use(express.json());
 app.use(cors());
 let usersDB = [];
@@ -20,6 +22,15 @@ app.get("/short-polling", (req, res) => {
   res.status(200).json({ users, last: usersDB.length });
 });
 
+app.get("/long-polling", (req, res) => {
+  const { last } = req.query;
+  eventEmitter.once("add-user", () => {
+    const users =
+      last < usersDB.length ? usersDB.slice(last, usersDB.length) : usersDB;
+    res.status(200).json({ users, last: usersDB.length });
+  });
+});
+
 app.listen(HTTP_PORT, () => {
   console.log("server is running on port " + HTTP_PORT);
 });
@@ -28,6 +39,7 @@ app.listen(HTTP_PORT, () => {
   const delay = Math.floor(Math.random() * 5000);
   setTimeout(() => {
     usersDB.push(generateUser());
+    eventEmitter.emit("add-user");
     if (usersDB.length > 10) usersDB = [];
     addUser();
   }, delay);
