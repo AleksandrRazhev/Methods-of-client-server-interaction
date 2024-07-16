@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { User } from "../types";
 
-type UseStartShortPolling = ({
+type UseShortPolling = ({
   delay,
   SERVER_HTTP_API,
 }: {
@@ -14,7 +14,7 @@ interface Response {
   last: number;
 }
 
-export const useStartShortPolling: UseStartShortPolling = ({
+export const useShortPolling: UseShortPolling = ({
   delay,
   SERVER_HTTP_API,
 }) => {
@@ -22,9 +22,9 @@ export const useStartShortPolling: UseStartShortPolling = ({
   const lastUserNumber = useRef<number>(0);
   const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const startShortPolling = useCallback(() => {
-    console.log("startShortPolling");
-    setTimeout(async () => {
+  const shortPolling = useCallback(() => {
+    console.log("shortPolling");
+    timeoutId.current = setTimeout(async () => {
       try {
         const res = await fetch(
           `${SERVER_HTTP_API}/short-polling?last=${lastUserNumber.current}`
@@ -43,20 +43,20 @@ export const useStartShortPolling: UseStartShortPolling = ({
       } catch (error) {
         console.log(error);
       }
-      startShortPolling();
+      shortPolling();
     }, delay);
   }, [delay, SERVER_HTTP_API, setUsers]);
 
   useEffect(() => {
     console.log("useEffect");
-    startShortPolling();
+    shortPolling();
     const timeout = timeoutId.current;
     return () => {
       if (timeout) {
         clearTimeout(timeout);
       }
     };
-  }, [startShortPolling]);
+  }, [shortPolling]);
 
   return users;
 };
