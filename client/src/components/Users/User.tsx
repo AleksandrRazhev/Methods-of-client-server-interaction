@@ -1,17 +1,20 @@
 import { FC, useMemo } from "react";
-import { useShortPolling } from "./useShortPolling";
-import { useLongPolling } from "./useLongPolling";
+import { useGetUsers } from "./useGetUsers";
 
 export const Users: FC = () => {
   const SERVER_HTTP_API = useMemo(() => `http://localhost:4000`, []);
-  const delay = useMemo(() => 3000, []);
 
-  const shortPollingUsers = useShortPolling({
-    delay,
+  const shortPollingUsers = useGetUsers({
     SERVER_HTTP_API,
+    delay: 3000,
+    getType: "shortPolling",
   });
 
-  const longPollingUsers = useLongPolling({ SERVER_HTTP_API });
+  const longPollingUsers = useGetUsers({
+    SERVER_HTTP_API,
+    delay: 0,
+    getType: "longPolling",
+  });
 
   return (
     <>
