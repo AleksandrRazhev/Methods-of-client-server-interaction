@@ -9,14 +9,16 @@ type UseGetUsers = ({
   delay,
 }: {
   SERVER_HTTP_API: string;
+  WEBSOCKET_API: string;
   getType: GetType;
   delay: number;
 }) => User[];
 
-type GetType = "shortPolling" | "longPolling";
+type GetType = "shortPolling" | "longPolling" | "webSocket";
 
 export const useGetUsers: UseGetUsers = ({
   SERVER_HTTP_API,
+  WEBSOCKET_API,
   getType,
   delay,
 }) => {
@@ -47,17 +49,33 @@ export const useGetUsers: UseGetUsers = ({
     });
   }, [delay, SERVER_HTTP_API]);
 
+  const webSocketMemo = useCallback(() => {
+    console.log("webSocket");
+    const ws = new WebSocket(`${WEBSOCKET_API}/ws`);
+    const params = { last: 0 };
+    ws.onopen = () => {
+      console.log("web socket connected");
+      ws.send(JSON.stringify(params));
+    };
+    ws.onmessage = (event) => {
+      const { users, last } = JSON.parse(event.data);
+      console.log(users);
+      console.log(last);
+    };
+  }, [WEBSOCKET_API]);
+
   useEffect(() => {
     console.log("useEffect");
     if (getType === "longPolling") longPollingMemo();
     if (getType === "shortPolling") shortPollingMemo();
+    if (getType === "webSocket") webSocketMemo();
     const timeout = timeoutId.current;
     const controller = controllerRef.current;
     return () => {
       if (timeout) clearTimeout(timeout);
       if (controller) controller.abort();
     };
-  }, [longPollingMemo, getType, shortPollingMemo]);
+  }, [longPollingMemo, shortPollingMemo, webSocketMemo, getType]);
 
   return users;
 };
