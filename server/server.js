@@ -9,13 +9,12 @@ const HTTP_PORT = 4000;
 const WS_PORT = 2000;
 const app = express();
 const eventEmitter = new EventEmitter();
-const wws = new WebSocketServer(
-  { port: WS_PORT },
-  () => `web socket server is running on port ${WS_PORT}`
+const wws = new WebSocketServer({ port: WS_PORT }, () =>
+  console.log(`web socket server is running on port ${WS_PORT}`)
 );
 wws.on("connection", (ws) => {
   let last = 0;
-  ws.on("error", console.error());
+  ws.on("error", console.error);
   ws.on("message", (data) => {
     const { lastUserIndex } = JSON.parse(data);
     last = lastUserIndex;
@@ -52,7 +51,7 @@ app.get("/long-polling", (req, res) => {
 });
 
 app.listen(HTTP_PORT, () => {
-  console.log("server is running on port " + HTTP_PORT);
+  console.log("http server is running on port " + HTTP_PORT);
 });
 
 (function addUser() {
