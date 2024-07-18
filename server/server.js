@@ -15,9 +15,8 @@ const wws = new WebSocketServer({ port: WS_PORT }, () =>
 wws.on("connection", (ws) => {
   let last = 0;
   ws.on("error", console.error);
-  ws.on("message", (data) => {
-    const { lastUserIndex } = JSON.parse(data);
-    last = lastUserIndex;
+  ws.on("message", (message) => {
+    last = JSON.parse(message).last;
   });
   eventEmitter.on("add-user", () => {
     const freshUser = usersDB.slice(last, usersDB.length);
