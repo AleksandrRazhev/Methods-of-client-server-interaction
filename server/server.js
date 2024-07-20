@@ -53,6 +53,21 @@ app.get("/long-polling", (req, res) => {
   });
 });
 
+app.get("/server-sent-event", (req, res) => {
+  const { last } = req.query;
+  let lastUser = last;
+  req.writeHead(200, {
+    Connection: "keep-alive",
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+  });
+  eventEmitter.on("add-user", () => {
+    const users =
+      last < usersDB.length ? usersDB.slice(last, usersDB.length) : usersDB;
+    res.write(`data: ${{ users, last: usersDB.length }} \n\n`);
+  });
+});
+
 app.listen(HTTP_PORT, () => {
   console.log("http server is running on port " + HTTP_PORT);
 });
