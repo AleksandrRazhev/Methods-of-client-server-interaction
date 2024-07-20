@@ -32,4 +32,6 @@ export const webSocket = ({
       setUsers((state) => [...state, ...users]);
     }
   };
+  ws.onclose = () => console.log("web socket connection closed");
+  ws.onerror = () => console.log("web socket error");
 };
