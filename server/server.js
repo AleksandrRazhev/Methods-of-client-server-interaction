@@ -19,10 +19,14 @@ wws.on("connection", (ws) => {
     last = JSON.parse(message).last;
   });
   eventEmitter.on("add-user", () => {
-    const freshUser = usersDB.slice(last, usersDB.length);
-    last = usersDB.length;
-    const data = JSON.stringify({ users: usersDB, last });
-    ws.send(data);
+    if (last === 0 || usersDB.length < 2) {
+      last = usersDB.length;
+      ws.send(JSON.stringify({ users: usersDB, last }));
+    } else {
+      const newUsers = usersDB.slice(last, usersDB.length);
+      last = usersDB.length;
+      ws.send(JSON.stringify({ users: newUsers, last }));
+    }
   });
 });
 app.use(express.json());

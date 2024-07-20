@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { User } from "../types";
 import { shortPolling } from "./shortPolling";
 import { longPolling } from "./longPolling";
+import { webSocket } from "./webSocket";
 
 type UseGetUsers = ({
   SERVER_HTTP_API,
@@ -50,18 +51,7 @@ export const useGetUsers: UseGetUsers = ({
   }, [delay, SERVER_HTTP_API]);
 
   const webSocketMemo = useCallback(() => {
-    console.log("webSocket");
-    const ws = new WebSocket(`${WEBSOCKET_API}/ws`);
-    const params = { last: 0 };
-    ws.onopen = () => {
-      console.log("web socket connected");
-      ws.send(JSON.stringify(params));
-    };
-    ws.onmessage = (event) => {
-      const { users, last } = JSON.parse(event.data);
-      console.log(users);
-      console.log(last);
-    };
+    webSocket({ WEBSOCKET_API, lastUserNumber, setUsers });
   }, [WEBSOCKET_API]);
 
   useEffect(() => {
