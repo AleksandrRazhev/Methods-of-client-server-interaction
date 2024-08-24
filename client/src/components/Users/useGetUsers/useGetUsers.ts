@@ -3,6 +3,7 @@ import { User } from "../types";
 import { shortPolling } from "./shortPolling";
 import { longPolling } from "./longPolling";
 import { webSocket } from "./webSocket";
+import { Response } from "./types";
 
 type UseGetUsers = ({
   SERVER_HTTP_API,
@@ -15,7 +16,7 @@ type UseGetUsers = ({
   delay: number;
 }) => User[];
 
-type GetType = "shortPolling" | "longPolling" | "webSocket";
+type GetType = "shortPolling" | "longPolling" | "webSocket" | "serverSentEvent";
 
 export const useGetUsers: UseGetUsers = ({
   SERVER_HTTP_API,
@@ -54,18 +55,44 @@ export const useGetUsers: UseGetUsers = ({
     webSocket({ WEBSOCKET_API, lastUserNumber, setUsers });
   }, [WEBSOCKET_API]);
 
+  const serverSentEventMemo = useCallback(() => {
+    const eventSource = new EventSource(
+      `${SERVER_HTTP_API}/server-sent-event?last=${lastUserNumber.current}`
+    );
+    eventSource.onmessage = (event) => {
+      const { users, last }: Response = JSON.parse(event.data);
+      if (last === lastUserNumber.current) {
+        return;
+      }
+      if (last < lastUserNumber.current) {
+        lastUserNumber.current = last;
+        setUsers(users);
+      } else {
+        lastUserNumber.current = last;
+        setUsers((state) => [...state, ...users]);
+      }
+    };
+  }, [SERVER_HTTP_API]);
+
   useEffect(() => {
     console.log("useEffect");
     if (getType === "longPolling") longPollingMemo();
     if (getType === "shortPolling") shortPollingMemo();
     if (getType === "webSocket") webSocketMemo();
+    if (getType === "serverSentEvent") serverSentEventMemo();
     const timeout = timeoutId.current;
     const controller = controllerRef.current;
     return () => {
       if (timeout) clearTimeout(timeout);
       if (controller) controller.abort();
     };
-  }, [longPollingMemo, shortPollingMemo, webSocketMemo, getType]);
+  }, [
+    longPollingMemo,
+    shortPollingMemo,
+    webSocketMemo,
+    serverSentEventMemo,
+    getType,
+  ]);
 
   return users;
 };

@@ -54,17 +54,22 @@ app.get("/long-polling", (req, res) => {
 });
 
 app.get("/server-sent-event", (req, res) => {
-  const { last } = req.query;
-  let lastUser = last;
-  req.writeHead(200, {
+  let last = Number(req.query.last) ?? 0;
+  res.writeHead(200, {
     Connection: "keep-alive",
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
   });
   eventEmitter.on("add-user", () => {
-    const users =
-      last < usersDB.length ? usersDB.slice(last, usersDB.length) : usersDB;
-    res.write(`data: ${{ users, last: usersDB.length }} \n\n`);
+    const data = { users: usersDB, last: usersDB.length };
+    if (last === 0 || usersDB.length < 2) {
+      last = usersDB.length;
+      res.write(`data: ${JSON.stringify(data)} \n\n`);
+    } else {
+      last = usersDB.length;
+      data.users = usersDB.slice(last - 1, usersDB.length);
+      res.write(`data: ${JSON.stringify(data)} \n\n`);
+    }
   });
 });
 
@@ -73,7 +78,7 @@ app.listen(HTTP_PORT, () => {
 });
 
 (function addUser() {
-  const delay = Math.floor(Math.random() * 5000);
+  const delay = Math.floor(Math.random() * 10000);
   setTimeout(() => {
     usersDB.push(generateUser());
     eventEmitter.emit("add-user");
